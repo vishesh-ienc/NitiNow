@@ -19,7 +19,14 @@ const Header = () => {
             </li>
             <li>
               <a
-                href="/government-policies"
+                href="#government-policies"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('government-policies')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                  });
+                }}
                 className="text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:bg-white/20 hover:-translate-y-0.5"
               >
                 Government policies
@@ -31,14 +38,6 @@ const Header = () => {
                 className="text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:bg-white/20 hover:-translate-y-0.5"
               >
                 Recent policy updates
-              </a>
-            </li>
-            <li>
-              <a
-                href="/student-section"
-                className="text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:bg-white/20 hover:-translate-y-0.5"
-              >
-                Student ?
               </a>
             </li>
             <li>
