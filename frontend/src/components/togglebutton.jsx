@@ -1,24 +1,42 @@
-import { useState } from "react";
+import React from 'react';
+import { useAppContext } from '../context/AppContext';
 
 function ToggleButton() {
-    const [onoff, setOnOff] = useState(false);
+    const { theme, toggleTheme } = useAppContext();
+    const isDark = theme === 'dark';
 
     return (
-        <button>
-            {/* From Uiverse.io by Javierrocadev */}
-            <label className="relative inline-flex items-center cursor-pointer mr-10">
-                <input type="checkbox" value="" className="sr-only peer" />
-                <div className="group peer ring-0 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full outline-none duration-300 after:duration-300 w-20 h-9  shadow-md peer-checked:from-[#764ba2] peer-checked:to-[#667eea] peer-focus:outline-none  after:content-[''] after:rounded-full after:absolute after:bg-gray-50 after:outline-none after:h-7 after:w-7 after:top-1 after:left-1 after:flex after:justify-center after:items-center peer-checked:after:translate-x-11 peer-hover:after:scale-95">
-                    <svg className="absolute  top-1 left-10 stroke-gray-900 w-7 h-7" height="100" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" width="100" x="0" xmlns="http://www.w3.org/2000/svg" y="0">
-                        <path className="svg-fill-primary" d="M50,18A19.9,19.9,0,0,0,30,38v8a8,8,0,0,0-8,8V74a8,8,0,0,0,8,8H70a8,8,0,0,0,8-8V54a8,8,0,0,0-8-8H38V38a12,12,0,0,1,23.6-3,4,4,0,1,0,7.8-2A20.1,20.1,0,0,0,50,18Z">
-                        </path>
-                    </svg>
-                    <svg className="absolute top-1 left-1 stroke-gray-900  w-7 h-7" height="100" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" width="100" x="0" xmlns="http://www.w3.org/2000/svg" y="0">
-                        <path d="M30,46V38a20,20,0,0,1,40,0v8a8,8,0,0,1,8,8V74a8,8,0,0,1-8,8H30a8,8,0,0,1-8-8V54A8,8,0,0,1,30,46Zm32-8v8H38V38a12,12,0,0,1,24,0Z" fillRule="evenodd">
-                        </path>
-                    </svg>
-                </div>
-            </label>
+        <button
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 cursor-pointer
+                ${isDark
+                    ? 'bg-[#1e293b] border-white/20 text-yellow-300'
+                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                }`}
+        >
+            {/* Sun icon */}
+            <svg
+                className={`w-4 h-4 transition-all duration-300 ${isDark ? 'opacity-40 scale-90' : 'opacity-100 scale-100 text-yellow-300'}`}
+                fill="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" />
+            </svg>
+
+            {/* Sliding pill indicator */}
+            <div className={`w-8 h-4 rounded-full relative transition-all duration-300 ${isDark ? 'bg-indigo-600' : 'bg-white/30'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all duration-300 ${isDark ? 'left-4' : 'left-0.5'}`} />
+            </div>
+
+            {/* Moon icon */}
+            <svg
+                className={`w-4 h-4 transition-all duration-300 ${isDark ? 'opacity-100 scale-100 text-indigo-300' : 'opacity-40 scale-90'}`}
+                fill="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path fillRule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z" clipRule="evenodd" />
+            </svg>
         </button>
     );
 }

@@ -10,9 +10,9 @@ const Button = ({
     const baseClasses = "border-none rounded-lg font-semibold cursor-pointer transition-all duration-300 font-sans disabled:opacity-60 disabled:cursor-not-allowed";
 
     const variantClasses = {
-        primary: "bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:shadow-lg",
-        secondary: "bg-gray-600 text-white hover:shadow-lg",
-        outline: "bg-transparent border-2 border-[#667eea] text-[#667eea] hover:shadow-lg"
+        primary: "bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white hover:shadow-lg hover:from-[#e55f00] hover:to-[#e07a00]",
+        secondary: "bg-[#003087] text-white hover:shadow-lg hover:bg-[#1a3a6b]",
+        outline: "bg-transparent border-2 border-[#003087] text-[#003087] hover:bg-[#003087] hover:text-white hover:shadow-lg"
     };
 
     const sizeClasses = {

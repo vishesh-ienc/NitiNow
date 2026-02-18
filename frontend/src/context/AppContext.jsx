@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
 
@@ -12,7 +12,21 @@ export const useAppContext = () => {
 
 export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [theme, setTheme] = useState('light');
+    const [theme, setTheme] = useState(() => {
+        // Restore from localStorage on mount
+        return localStorage.getItem('nitinow-theme') || 'light';
+    });
+
+    // Apply dark class to <html> whenever theme changes
+    useEffect(() => {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+        localStorage.setItem('nitinow-theme', theme);
+    }, [theme]);
 
     const login = (userData) => {
         setUser(userData);
