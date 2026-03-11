@@ -13,8 +13,15 @@ export const useAppContext = () => {
 export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [theme, setTheme] = useState(() => {
-        // Restore from localStorage on mount
         return localStorage.getItem('nitinow-theme') || 'light';
+    });
+
+    // ── Filter state shared across FilterSection ↔ GovernmentPolicies ──
+    const [filters, setFilters] = useState({
+        search: '',
+        level: '',
+        category: '',
+        tags: [],
     });
 
     // Apply dark class to <html> whenever theme changes
@@ -28,16 +35,16 @@ export const AppProvider = ({ children }) => {
         localStorage.setItem('nitinow-theme', theme);
     }, [theme]);
 
-    const login = (userData) => {
-        setUser(userData);
+    const login = (userData) => setUser(userData);
+    const logout = () => setUser(null);
+    const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+
+    const updateFilters = (patch) => {
+        setFilters((prev) => ({ ...prev, ...patch }));
     };
 
-    const logout = () => {
-        setUser(null);
-    };
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const clearFilters = () => {
+        setFilters({ search: '', level: '', category: '', tags: [] });
     };
 
     const value = {
@@ -46,6 +53,9 @@ export const AppProvider = ({ children }) => {
         login,
         logout,
         toggleTheme,
+        filters,
+        updateFilters,
+        clearFilters,
     };
 
     return (
