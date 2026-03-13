@@ -1,21 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { schemesAPI } from '../services/api';
 
 const categoryColors = {
-    'Education & Learning': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    'Education': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
     'Skills & Employment': 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-    'Health & Wellness': 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    'Health': 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
     'Business & Entrepreneurship': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-    'Social welfare & Empowerment': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
-    'Women and Child': 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
-    'Science,IT & Communications': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-    'Agriculture,Rural & Environment': 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300',
-    'Banking,Financial Services and Insurance': 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+    'Social Welfare': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+    'Women & Child': 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
+    'Science & Technology': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+    'Agriculture': 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300',
+    'Finance & Banking': 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
     'Sports & Culture': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
     'Utility & Sanitation': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
     'Transport & Infrastructure': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    'Travel & Tourism': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    'Housing': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    'Law & Justice': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    'Travel & Tourism': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -28,7 +30,7 @@ const GovernmentPolicies = () => {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [expandedSlug, setExpandedSlug] = useState(null);
+    const [expandedIdx, setExpandedIdx] = useState(null);
 
     // Debounced fetch
     const fetchSchemes = useCallback(
@@ -40,7 +42,7 @@ const GovernmentPolicies = () => {
                     search: filters.search,
                     level: filters.level,
                     category: filters.category,
-                    tags: filters.tags,
+                    state: filters.state,
                     page: pageNum,
                     limit: ITEMS_PER_PAGE,
                 });
@@ -71,17 +73,128 @@ const GovernmentPolicies = () => {
     const truncate = (text, len = 120) =>
         text && text.length > len ? text.slice(0, len) + '…' : text;
 
-    const getFirstCategory = (cat) => {
-        if (!cat) return '';
-        return cat.split(',')[0].trim();
+    // Parse text into bullet points
+    const parseBulletPoints = (text, maxPoints = 4, truncateLen = 80) => {
+        if (!text) return [];
+        const raw = text
+            .split(/(?:\.\s+(?=[A-Z₹]))|(?:\s*(?:\d+[\.\\)]\s))|(?:\s*[;•]\s*)/)
+            .map((s) => s.trim().replace(/^\.*|\.*$/g, '').trim())
+            .filter((s) => s.length > 15);
+        return {
+            collapsed: raw.slice(0, maxPoints).map((s) => s.length > truncateLen ? s.slice(0, truncateLen) + '…' : s),
+            full: raw.slice(0, 8).map((s) => s.length > 150 ? s.slice(0, 150) + '…' : s),
+            isTruncated: raw.length > maxPoints || raw.some((s) => s.length > truncateLen),
+        };
+    };
+
+    // Highlight key info within a bullet point
+    const highlightKeyInfo = (text) => {
+        const moneyRegex = /₹\s?[\d,]+(?:\/\-)?(?:\s?(?:lakh|lakhs|crore|crores|per\s+\w+))?/gi;
+        const percentRegex = /\d+(?:\.\d+)?%/g;
+        const ageRegex = /(?:age\s*(?:of|group|between|limit)?\s*(?:of)?\s*)?\d+\s*(?:to|-)\s*\d+\s*years/gi;
+
+        const allMatches = [];
+        let m;
+        while ((m = moneyRegex.exec(text)) !== null) allMatches.push({ value: m[0], type: 'money' });
+        while ((m = percentRegex.exec(text)) !== null) allMatches.push({ value: m[0], type: 'percent' });
+        while ((m = ageRegex.exec(text)) !== null) allMatches.push({ value: m[0], type: 'age' });
+
+        return allMatches;
+    };
+
+    // Render a bullet list with "Read more" toggle
+    const BulletList = ({ text, type }) => {
+        const [expanded, setExpanded] = React.useState(false);
+        const parsed = parseBulletPoints(text);
+        const points = expanded ? parsed.full : parsed.collapsed;
+
+        if (points.length === 0) return <p className="text-sm text-gray-600 dark:text-gray-300">{text?.slice(0, 200)}</p>;
+
+        const colorMap = {
+            benefits: {
+                badge: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+                dot: 'bg-green-500',
+                link: 'text-green-600 dark:text-green-400 hover:text-green-700',
+            },
+            eligibility: {
+                badge: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
+                dot: 'bg-purple-500',
+                link: 'text-purple-600 dark:text-purple-400 hover:text-purple-700',
+            },
+        };
+        const colors = colorMap[type] || colorMap.benefits;
+
+        return (
+            <div>
+                <ul className={`space-y-2 ${expanded ? 'max-h-48 overflow-y-auto pr-1' : ''}`}>
+                    {points.map((point, i) => {
+                        const highlights = highlightKeyInfo(point);
+                        return (
+                            <li key={i} className="flex items-start gap-2.5">
+                                <span className={`w-1.5 h-1.5 rounded-full ${colors.dot} mt-2 flex-shrink-0`} />
+                                <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                    {point}
+                                    {highlights.length > 0 && (
+                                        <span className="inline-flex flex-wrap gap-1.5 ml-2">
+                                            {highlights.slice(0, 2).map((h, j) => (
+                                                <span
+                                                    key={j}
+                                                    className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full ${colors.badge}`}
+                                                >
+                                                    {h.type === 'money' && '💰 '}
+                                                    {h.type === 'percent' && '📊 '}
+                                                    {h.type === 'age' && '👤 '}
+                                                    {h.value}
+                                                </span>
+                                            ))}
+                                        </span>
+                                    )}
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+                {parsed.isTruncated && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+                        className={`mt-2 text-xs font-semibold ${colors.link} transition-colors`}
+                    >
+                        {expanded ? '← Show less' : 'Read more →'}
+                    </button>
+                )}
+            </div>
+        );
+    };
+
+    // Expandable text block for Details
+    const ExpandableText = ({ text, maxLen = 300 }) => {
+        const [expanded, setExpanded] = React.useState(false);
+        if (!text) return null;
+        const needsTruncation = text.length > maxLen;
+        const cappedText = text.length > 600 ? text.slice(0, 600) + '…' : text;
+        const displayText = expanded ? cappedText : (needsTruncation ? text.slice(0, maxLen) + '…' : text);
+
+        return (
+            <div className={expanded ? 'max-h-40 overflow-y-auto pr-1' : ''}>
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{displayText}</p>
+                {needsTruncation && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+                        className="mt-1 text-xs font-semibold text-[#003087] dark:text-blue-400 hover:text-[#0050cc] transition-colors"
+                    >
+                        {expanded ? '← Show less' : 'Read more →'}
+                    </button>
+                )}
+            </div>
+        );
     };
 
     return (
         <section
-            id="government-policies"
-            className="py-20 px-6 bg-white dark:bg-gray-950 relative overflow-hidden transition-colors duration-300"
+            id="policies"
+            className="relative py-20 px-4 sm:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950"
         >
-            {/* Subtle background pattern */}
+            {/* Subtle dot pattern */}
             <div
                 className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
                 style={{
@@ -94,57 +207,51 @@ const GovernmentPolicies = () => {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
                     <div>
-                        <span className="inline-block bg-[#003087]/10 dark:bg-blue-900/30 text-[#003087] dark:text-blue-300 text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-3 border border-[#003087]/20 dark:border-blue-500/30">
+                        <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#FF6B00] bg-[#FF6B00]/10 dark:bg-orange-900/30 px-4 py-1.5 rounded-full mb-4">
                             Government Schemes
                         </span>
-                        <h2 className="text-4xl md:text-5xl font-black text-[#001233] dark:text-white leading-tight">
+                        <h2 className="text-4xl sm:text-5xl font-extrabold text-[#001233] dark:text-white leading-tight">
                             Government{' '}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[#FF8C00]">
-                                Policies
-                            </span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[#FF8C00]">Policies</span>
                         </h2>
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        {loading ? (
-                            <span className="animate-pulse">Loading...</span>
-                        ) : (
-                            <span>
-                                Showing <span className="font-bold text-[#003087] dark:text-blue-400">{schemes.length}</span> of{' '}
-                                <span className="font-bold">{total.toLocaleString()}</span> schemes
-                            </span>
-                        )}
-                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Showing <span className="font-bold text-[#003087] dark:text-blue-300">{schemes.length}</span> of{' '}
+                        <span className="font-bold">{total.toLocaleString()}</span> schemes
+                    </p>
                 </div>
 
-                {/* Error state */}
+                {/* Error State */}
                 {error && (
-                    <div className="mb-8 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-                        ⚠️ {error}
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-6 py-4 rounded-2xl mb-8 text-sm">
+                        {error}
                     </div>
                 )}
 
                 {/* Table */}
-                <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl shadow-gray-200/50 dark:shadow-black/30">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700 rounded-2xl shadow-lg shadow-gray-200/40 dark:shadow-black/20 overflow-hidden">
                     <div className="max-h-[620px] overflow-y-auto">
-                        <table className="min-w-full">
-                            <thead className="sticky top-0 z-10">
-                                <tr className="bg-gradient-to-r from-[#001a4d] to-[#003087] dark:from-gray-900 dark:to-gray-800">
-                                    <th className="py-4 px-5 text-center text-xs font-bold text-white/60 uppercase tracking-widest w-12">#</th>
-                                    <th className="py-4 px-5 text-left text-xs font-bold text-white uppercase tracking-widest">Scheme Name</th>
-                                    <th className="py-4 px-5 text-left text-xs font-bold text-white/80 uppercase tracking-widest">Category</th>
-                                    <th className="py-4 px-5 text-left text-xs font-bold text-white/80 uppercase tracking-widest">Level</th>
-                                    <th className="py-4 px-5 text-left text-xs font-bold text-white/80 uppercase tracking-widest max-w-[220px]">Benefits</th>
-                                    <th className="py-4 px-5 text-left text-xs font-bold text-white/80 uppercase tracking-widest max-w-[200px]">Eligibility</th>
-                                    <th className="py-4 px-5 text-center text-xs font-bold text-white/80 uppercase tracking-widest">Details</th>
+                        <table className="w-full text-left">
+                            <thead className="sticky top-0 z-20">
+                                <tr className="bg-gradient-to-r from-[#001233] to-[#003087] text-white">
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-center w-12">#</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Scheme Name</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Category</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Level</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Benefits</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Eligibility</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-center">Details</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                {loading && schemes.length === 0 ? (
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                {loading ? (
                                     <tr>
-                                        <td colSpan="7" className="py-16 text-center">
-                                            <div className="flex flex-col items-center gap-3">
-                                                <div className="w-8 h-8 border-3 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-                                                <span className="text-gray-400 dark:text-gray-500 text-sm">Loading schemes...</span>
+                                        <td colSpan="7" className="py-20 text-center">
+                                            <div className="inline-flex items-center gap-3 text-gray-400 dark:text-gray-500">
+                                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4 31.4" />
+                                                </svg>
+                                                Loading schemes…
                                             </div>
                                         </td>
                                     </tr>
@@ -157,15 +264,14 @@ const GovernmentPolicies = () => {
                                 ) : (
                                     schemes.map((scheme, idx) => {
                                         const globalIdx = (page - 1) * ITEMS_PER_PAGE + idx + 1;
-                                        const firstCat = getFirstCategory(scheme.schemeCategory);
-                                        const colorClass = categoryColors[firstCat] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
-                                        const isExpanded = expandedSlug === scheme.slug;
+                                        const colorClass = categoryColors[scheme.category] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+                                        const isExpanded = expandedIdx === idx;
 
                                         return (
-                                            <React.Fragment key={scheme.slug || idx}>
+                                            <React.Fragment key={idx}>
                                                 <tr
                                                     className={`group transition-all duration-150 hover:bg-orange-50/60 dark:hover:bg-orange-900/10 cursor-pointer ${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50'}`}
-                                                    onClick={() => setExpandedSlug(isExpanded ? null : scheme.slug)}
+                                                    onClick={() => setExpandedIdx(isExpanded ? null : idx)}
                                                 >
                                                     <td className="py-4 px-5 text-center">
                                                         <span className="w-7 h-7 rounded-full bg-[#003087]/10 dark:bg-blue-900/30 text-[#003087] dark:text-blue-300 text-xs font-bold flex items-center justify-center mx-auto">
@@ -179,7 +285,7 @@ const GovernmentPolicies = () => {
                                                     </td>
                                                     <td className="py-4 px-5">
                                                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${colorClass}`}>
-                                                            {firstCat || '—'}
+                                                            {scheme.category || '—'}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-5">
@@ -188,19 +294,19 @@ const GovernmentPolicies = () => {
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-5 text-sm text-gray-600 dark:text-gray-400 max-w-[220px]">
-                                                        {truncate(scheme.benefits, 100)}
+                                                        {truncate(scheme.benefits, 50)}
                                                     </td>
                                                     <td className="py-4 px-5 text-sm text-gray-500 dark:text-gray-400 max-w-[200px]">
-                                                        {truncate(scheme.eligibility, 80)}
+                                                        {truncate(scheme.eligibility, 40)}
                                                     </td>
                                                     <td className="py-4 px-5 text-center">
                                                         <div className="flex items-center gap-2 justify-center">
                                                             <button className="inline-flex items-center gap-1 bg-gradient-to-r from-[#003087] to-[#0050cc] text-white text-xs font-bold py-1.5 px-3 rounded-full hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                                                                 {isExpanded ? 'Close' : 'View'}
                                                             </button>
-                                                            {scheme.applyLink && (
+                                                            {scheme.official_link && (
                                                                 <a
-                                                                    href={scheme.applyLink}
+                                                                    href={scheme.official_link}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
@@ -215,56 +321,68 @@ const GovernmentPolicies = () => {
 
                                                 {/* Expanded detail row */}
                                                 {isExpanded && (
-                                                    <tr className="bg-gradient-to-br from-blue-50/80 to-orange-50/40 dark:from-gray-800 dark:to-gray-850">
+                                                    <tr
+                                                        ref={(el) => {
+                                                            if (el) {
+                                                                setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                                                            }
+                                                        }}
+                                                        className="bg-gradient-to-br from-blue-50/80 to-orange-50/40 dark:from-gray-800 dark:to-gray-850"
+                                                    >
                                                         <td colSpan="7" className="p-6">
                                                             <div className="max-w-5xl mx-auto space-y-5">
                                                                 <h3 className="text-lg font-bold text-[#001233] dark:text-white">{scheme.scheme_name}</h3>
 
+                                                                {/* Level & State badges */}
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {scheme.level && (
+                                                                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${scheme.level === 'Central' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}`}>
+                                                                            {scheme.level}
+                                                                        </span>
+                                                                    )}
+                                                                    {scheme.state && (
+                                                                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                                                                            📍 {scheme.state}
+                                                                        </span>
+                                                                    )}
+                                                                    {scheme.category && (
+                                                                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${colorClass}`}>
+                                                                            {scheme.category}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
                                                                 {scheme.details && (
                                                                     <div>
                                                                         <h4 className="text-xs font-bold text-[#003087] dark:text-blue-400 uppercase tracking-wider mb-1">Details</h4>
-                                                                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{scheme.details.slice(0, 500)}{scheme.details.length > 500 ? '…' : ''}</p>
+                                                                        <ExpandableText text={scheme.details} maxLen={300} />
                                                                     </div>
                                                                 )}
 
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                     {scheme.benefits && (
                                                                         <div className="bg-white/70 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-200/60 dark:border-gray-700">
-                                                                            <h4 className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wider mb-1">💰 Benefits</h4>
-                                                                            <p className="text-sm text-gray-600 dark:text-gray-300">{scheme.benefits.slice(0, 400)}{scheme.benefits.length > 400 ? '…' : ''}</p>
+                                                                            <h4 className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wider mb-3">💰 Benefits</h4>
+                                                                            <BulletList text={scheme.benefits} type="benefits" />
                                                                         </div>
                                                                     )}
                                                                     {scheme.eligibility && (
                                                                         <div className="bg-white/70 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-200/60 dark:border-gray-700">
-                                                                            <h4 className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider mb-1">✅ Eligibility</h4>
-                                                                            <p className="text-sm text-gray-600 dark:text-gray-300">{scheme.eligibility.slice(0, 400)}{scheme.eligibility.length > 400 ? '…' : ''}</p>
+                                                                            <h4 className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider mb-3">✅ Eligibility</h4>
+                                                                            <BulletList text={scheme.eligibility} type="eligibility" />
                                                                         </div>
                                                                     )}
                                                                 </div>
 
-                                                                {scheme.application && (
-                                                                    <div className="bg-white/70 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-200/60 dark:border-gray-700">
-                                                                        <h4 className="text-xs font-bold text-[#FF6B00] uppercase tracking-wider mb-1">📋 How to Apply</h4>
-                                                                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{scheme.application.slice(0, 600)}{scheme.application.length > 600 ? '…' : ''}</p>
-                                                                    </div>
-                                                                )}
-
-                                                                {scheme.documents && (
-                                                                    <div>
-                                                                        <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">📄 Documents Required</h4>
-                                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{scheme.documents.slice(0, 300)}{scheme.documents.length > 300 ? '…' : ''}</p>
-                                                                    </div>
-                                                                )}
-
                                                                 {/* Apply Here CTA */}
-                                                                {scheme.applyLink && (
+                                                                {scheme.official_link && (
                                                                     <div className="bg-gradient-to-r from-[#FF6B00]/10 to-[#FF8C00]/10 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-5 border-2 border-[#FF6B00]/30 dark:border-orange-500/30 flex items-center justify-between">
                                                                         <div>
                                                                             <h4 className="text-sm font-bold text-[#FF6B00] dark:text-orange-400 mb-1">🚀 Ready to Apply?</h4>
                                                                             <p className="text-xs text-gray-500 dark:text-gray-400">Click below to go directly to the official application portal.</p>
                                                                         </div>
                                                                         <a
-                                                                            href={scheme.applyLink}
+                                                                            href={scheme.official_link}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-sm font-bold py-3 px-7 rounded-full hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap"
@@ -274,19 +392,9 @@ const GovernmentPolicies = () => {
                                                                     </div>
                                                                 )}
 
-                                                                {!scheme.applyLink && scheme.application && (
+                                                                {!scheme.official_link && (
                                                                     <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-200/60 dark:border-gray-700 text-center">
-                                                                        <p className="text-sm text-gray-500 dark:text-gray-400">No direct application link available. Please follow the steps above to apply offline.</p>
-                                                                    </div>
-                                                                )}
-
-                                                                {scheme.tags && (
-                                                                    <div className="flex flex-wrap gap-2 pt-2">
-                                                                        {scheme.tags.split(',').map((tag) => (
-                                                                            <span key={tag.trim()} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full font-medium">
-                                                                                {tag.trim()}
-                                                                            </span>
-                                                                        ))}
+                                                                        <p className="text-sm text-gray-500 dark:text-gray-400">No direct application link available. Please visit the relevant government portal to apply.</p>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -300,30 +408,31 @@ const GovernmentPolicies = () => {
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Footer with pagination */}
-                    <div className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                            Page {page} of {totalPages || 1} · {total.toLocaleString()} schemes
-                        </p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                disabled={page <= 1}
-                                className="text-xs font-bold text-[#003087] dark:text-blue-400 hover:text-[#FF6B00] transition-colors disabled:opacity-30 disabled:cursor-not-allowed px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                                ← Prev
-                            </button>
-                            <button
-                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={page >= totalPages}
-                                className="text-xs font-bold text-[#003087] dark:text-blue-400 hover:text-[#FF6B00] transition-colors disabled:opacity-30 disabled:cursor-not-allowed px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                                Next →
-                            </button>
-                        </div>
-                    </div>
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-3 mt-8">
+                        <button
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#003087] hover:text-[#003087] dark:hover:border-blue-400 dark:hover:text-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            ← Prev
+                        </button>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            Page <span className="font-bold text-[#003087] dark:text-blue-300">{page}</span> of{' '}
+                            <span className="font-bold">{totalPages}</span>
+                        </span>
+                        <button
+                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#003087] hover:text-[#003087] dark:hover:border-blue-400 dark:hover:text-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            Next →
+                        </button>
+                    </div>
+                )}
             </div>
         </section>
     );

@@ -1,186 +1,147 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+const { createClient } = require('@supabase/supabase-js');
 
 const router = express.Router();
 
-// ─── Extract first URL from text ───
-function extractUrl(text) {
-    if (!text) return '';
-    const match = text.match(/https?:\/\/[^\s,\)\"\>\<\)]+/i);
-    return match ? match[0].replace(/[.)]+$/, '') : '';
-}
+// ─── Supabase client ───
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+);
 
-// ─── Load CSV into memory on startup ───
-let allSchemes = [];
-let filterOptions = {
-    levels: [],
-    categories: [],
-    tags: [],
-};
-
-function loadCSV() {
-    return new Promise((resolve, reject) => {
-        const results = [];
-        fs.createReadStream(path.join(__dirname, 'updated_data.csv'))
-            .pipe(csv())
-            .on('data', (row) => {
-                // Normalise keys (CSV may have trailing spaces)
-                const clean = {};
-                for (const key of Object.keys(row)) {
-                    clean[key.trim()] = (row[key] || '').trim();
-                }
-
-                const applicationText = clean.application || '';
-
-                results.push({
-                    scheme_name: clean.scheme_name || '',
-                    slug: clean.slug || '',
-                    details: clean.details || '',
-                    benefits: clean.benefits || '',
-                    eligibility: clean.eligibility || '',
-                    application: applicationText,
-                    applyLink: extractUrl(applicationText),
-                    documents: clean.documents || '',
-                    level: clean.level || '',
-                    schemeCategory: clean.schemeCategory || '',
-                    tags: clean.tags || '',
-                });
-            })
-            .on('end', () => {
-                allSchemes = results;
-                buildFilterOptions();
-                console.log(`✅ Loaded ${allSchemes.length} schemes from CSV`);
-                resolve();
-            })
-            .on('error', reject);
-    });
-}
-
-function buildFilterOptions() {
-    const levelSet = new Set();
-    const categorySet = new Set();
-    const tagSet = new Set();
-
-    for (const s of allSchemes) {
-        if (s.level) levelSet.add(s.level);
-
-        // schemeCategory can contain multiple comma-separated values
-        if (s.schemeCategory) {
-            s.schemeCategory.split(',').forEach((c) => {
-                const trimmed = c.trim();
-                if (trimmed) categorySet.add(trimmed);
-            });
-        }
-
-        // tags are comma-separated
-        if (s.tags) {
-            s.tags.split(',').forEach((t) => {
-                const trimmed = t.trim();
-                if (trimmed) tagSet.add(trimmed);
-            });
-        }
-    }
-
-    filterOptions = {
-        levels: [...levelSet].sort(),
-        categories: [...categorySet].sort(),
-        tags: [...tagSet].sort(),
-    };
-}
+const TABLE_NAME = 'schemes'; 
 
 // ─── GET /api/schemes/filters  →  distinct filter values ───
-router.get('/filters', (req, res) => {
-    res.json(filterOptions);
+router.get('/filters', async (req, res) => {
+    try {
+        // Fetch distinct levels
+        const { data: levelData } = await supabase
+            .from(TABLE_NAME)
+            .select('level')
+            .not('level', 'is', null)
+            .not('level', 'eq', '');
+        const levels = [...new Set(levelData?.map((r) => r.level).filter(Boolean))].sort();
+
+        // Fetch distinct categories
+        const { data: catData } = await supabase
+            .from(TABLE_NAME)
+            .select('category')
+            .not('category', 'is', null)
+            .not('category', 'eq', '');
+        const categories = [...new Set(catData?.map((r) => r.category).filter(Boolean))].sort();
+
+        // Fetch distinct states
+        const { data: stateData } = await supabase
+            .from(TABLE_NAME)
+            .select('state')
+            .not('state', 'is', null)
+            .not('state', 'eq', '');
+        const states = [...new Set(stateData?.map((r) => r.state).filter(Boolean))].sort();
+
+        res.json({ levels, categories, states });
+    } catch (err) {
+        console.error('Error fetching filters:', err);
+        res.status(500).json({ error: 'Failed to fetch filter options' });
+    }
 });
 
 // ─── GET /api/schemes  →  filtered + paginated list ───
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const {
         search = '',
         level = '',
         category = '',
-        tags = '',       // comma-separated tag list
+        state = '',
         page = '1',
         limit = '20',
     } = req.query;
 
-    let filtered = allSchemes;
+    try {
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+        const offset = (pageNum - 1) * limitNum;
 
-    // Search across scheme_name, details, benefits, eligibility
-    if (search) {
-        const q = search.toLowerCase();
-        filtered = filtered.filter(
-            (s) =>
-                s.scheme_name.toLowerCase().includes(q) ||
-                s.details.toLowerCase().includes(q) ||
-                s.benefits.toLowerCase().includes(q) ||
-                s.eligibility.toLowerCase().includes(q)
-        );
-    }
+        // Build query
+        let query = supabase
+            .from(TABLE_NAME)
+            .select('*', { count: 'exact' });
 
-    // Filter by level (Central / State)
-    if (level) {
-        filtered = filtered.filter(
-            (s) => s.level.toLowerCase() === level.toLowerCase()
-        );
-    }
-
-    // Filter by category (match any of the scheme's categories)
-    if (category) {
-        const cat = category.toLowerCase();
-        filtered = filtered.filter((s) =>
-            s.schemeCategory
-                .split(',')
-                .some((c) => c.trim().toLowerCase() === cat)
-        );
-    }
-
-    // Filter by tags (scheme must contain ALL requested tags)
-    if (tags) {
-        const requestedTags = tags
-            .split(',')
-            .map((t) => t.trim().toLowerCase())
-            .filter(Boolean);
-
-        filtered = filtered.filter((s) => {
-            const schemeTags = s.tags
-                .split(',')
-                .map((t) => t.trim().toLowerCase());
-            return requestedTags.every((rt) =>
-                schemeTags.some((st) => st.includes(rt))
+        // Apply filters
+        if (level) {
+            query = query.ilike('level', level);
+        }
+        if (category) {
+            query = query.ilike('category', category);
+        }
+        if (state) {
+            query = query.ilike('state', state);
+        }
+        if (search) {
+            // Search across multiple columns using OR
+            query = query.or(
+                `scheme_name.ilike.%${search}%,details.ilike.%${search}%,benefits.ilike.%${search}%,eligibility.ilike.%${search}%`
             );
+        }
+
+        // Pagination
+        query = query.range(offset, offset + limitNum - 1);
+
+        const { data, count, error } = await query;
+
+        if (error) {
+            console.error('Supabase query error:', error);
+            return res.status(500).json({ error: 'Database query failed' });
+        }
+
+        res.json({
+            total: count || 0,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil((count || 0) / limitNum),
+            data: (data || []).map((row) => ({
+                scheme_name: row.scheme_name || '',
+                category: row.category || '',
+                level: row.level || '',
+                state: row.state || '',
+                benefits: row.benefits || '',
+                eligibility: row.eligibility || '',
+                details: row.details || '',
+                official_link: row.official_link || '',
+            })),
         });
+    } catch (err) {
+        console.error('Error fetching schemes:', err);
+        res.status(500).json({ error: 'Failed to fetch schemes' });
     }
-
-    // Pagination
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
-    const startIdx = (pageNum - 1) * limitNum;
-    const paginated = filtered.slice(startIdx, startIdx + limitNum);
-
-    res.json({
-        total: filtered.length,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(filtered.length / limitNum),
-        data: paginated,
-    });
 });
 
-// ─── GET /api/schemes/:slug  →  single scheme detail ───
-router.get('/:slug', (req, res) => {
-    const scheme = allSchemes.find(
-        (s) => s.slug === req.params.slug
-    );
-    if (!scheme) {
-        return res.status(404).json({ error: 'Scheme not found' });
-    }
-    res.json(scheme);
-});
+// ─── GET /api/schemes/:id  →  single scheme detail ───
+router.get('/:id', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .select('*')
+            .eq('id', req.params.id)
+            .single();
 
-// Load data immediately
-loadCSV().catch((err) => console.error('Failed to load CSV:', err));
+        if (error || !data) {
+            return res.status(404).json({ error: 'Scheme not found' });
+        }
+
+        res.json({
+            scheme_name: data.scheme_name || '',
+            category: data.category || '',
+            level: data.level || '',
+            state: data.state || '',
+            benefits: data.benefits || '',
+            eligibility: data.eligibility || '',
+            details: data.details || '',
+            official_link: data.official_link || '',
+        });
+    } catch (err) {
+        console.error('Error fetching scheme:', err);
+        res.status(500).json({ error: 'Failed to fetch scheme' });
+    }
+});
 
 module.exports = router;

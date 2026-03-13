@@ -21,7 +21,7 @@ export const AppProvider = ({ children }) => {
         search: '',
         level: '',
         category: '',
-        tags: [],
+        state: '',
     });
 
     // Apply dark class to <html> whenever theme changes
@@ -44,7 +44,7 @@ export const AppProvider = ({ children }) => {
     };
 
     const clearFilters = () => {
-        setFilters({ search: '', level: '', category: '', tags: [] });
+        setFilters({ search: '', level: '', category: '', state: '' });
     };
 
     const value = {

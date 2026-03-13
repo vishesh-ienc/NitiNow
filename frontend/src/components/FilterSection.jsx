@@ -4,7 +4,7 @@ import { schemesAPI } from '../services/api';
 
 const FilterSection = () => {
     const { filters, updateFilters, clearFilters } = useAppContext();
-    const [filterOptions, setFilterOptions] = useState({ levels: [], categories: [], tags: [] });
+    const [filterOptions, setFilterOptions] = useState({ levels: [], categories: [], states: [] });
     const [loading, setLoading] = useState(true);
 
     // Fetch available filter values from backend on mount
@@ -21,34 +21,11 @@ const FilterSection = () => {
             });
     }, []);
 
-    const toggleTag = (tag) => {
-        const current = filters.tags || [];
-        const updated = current.includes(tag)
-            ? current.filter((t) => t !== tag)
-            : [...current, tag];
-        updateFilters({ tags: updated });
-    };
-
     const activeCount =
         (filters.level ? 1 : 0) +
         (filters.category ? 1 : 0) +
-        (filters.tags?.length || 0);
-
-    // Show a curated subset of popular tags for the "I am a..." section
-    const popularTags = [
-        { label: 'Financial Assistance', icon: '💰' },
-        { label: 'Education', icon: '🎓' },
-        { label: 'Women', icon: '👩‍💼' },
-        { label: 'Student', icon: '📚' },
-        { label: 'Training', icon: '🔧' },
-        { label: 'Entrepreneurship', icon: '🚀' },
-        { label: 'Labour', icon: '👷' },
-        { label: 'Health', icon: '🏥' },
-        { label: 'Insurance', icon: '🛡️' },
-        { label: 'Disability', icon: '♿' },
-        { label: 'Farmer', icon: '🌾' },
-        { label: 'Housing', icon: '🏠' },
-    ];
+        (filters.state ? 1 : 0) +
+        (filters.search ? 1 : 0);
 
     return (
         <section
@@ -73,12 +50,12 @@ const FilterSection = () => {
                         </span>
                     </h2>
                     <p className="text-gray-500 dark:text-gray-400 text-base max-w-xl mx-auto">
-                        Select your profile below to instantly discover government schemes you're eligible for.
+                        Filter by level, category, or state to discover government schemes you're eligible for.
                     </p>
                 </div>
 
-                {/* Dropdown row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                {/* Filter dropdowns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {/* Level filter */}
                     <div className="relative group">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">🏛️</div>
@@ -123,6 +100,28 @@ const FilterSection = () => {
                         </div>
                     </div>
 
+                    {/* State filter */}
+                    <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">📍</div>
+                        <select
+                            value={filters.state}
+                            onChange={(e) => updateFilters({ state: e.target.value })}
+                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer
+                                focus:outline-none focus:border-[#FF6B00] focus:ring-4 focus:ring-[#FF6B00]/10
+                                hover:border-[#FF6B00]/50 transition-all duration-200 appearance-none shadow-sm hover:shadow-md"
+                        >
+                            <option value="">State / UT</option>
+                            {filterOptions.states.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+
                     {/* Search input */}
                     <div className="relative group">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">🔍</div>
@@ -138,18 +137,33 @@ const FilterSection = () => {
                     </div>
                 </div>
 
-                {/* Tag filters */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-6 transition-colors duration-300">
+                {/* Quick-search tag pills */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-6 mb-6 transition-colors duration-300">
                     <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
                         I'm looking for...
                     </p>
                     <div className="flex flex-wrap gap-3">
-                        {popularTags.map((f) => {
-                            const selected = (filters.tags || []).includes(f.label);
+                        {[
+                            { label: 'Financial Assistance', icon: '💰' },
+                            { label: 'Education', icon: '🎓' },
+                            { label: 'Women', icon: '👩‍💼' },
+                            { label: 'Student', icon: '📚' },
+                            { label: 'Training', icon: '🔧' },
+                            { label: 'Entrepreneurship', icon: '🚀' },
+                            { label: 'Civil Services', icon: '🏛️' },
+                            { label: 'Labour', icon: '👷' },
+                            { label: 'Health', icon: '🏥' },
+                            { label: 'Insurance', icon: '🛡️' },
+                            { label: 'Disability', icon: '♿' },
+                            { label: 'Farmer', icon: '🌾' },
+                            { label: 'Housing', icon: '🏠' },
+                            { label: 'Scholarship', icon: '🎖️' },
+                        ].map((f) => {
+                            const selected = filters.search === f.label;
                             return (
                                 <button
                                     key={f.label}
-                                    onClick={() => toggleTag(f.label)}
+                                    onClick={() => updateFilters({ search: selected ? '' : f.label })}
                                     className={`flex items-center gap-2 text-sm font-semibold py-2.5 px-5 rounded-full border-2 transition-all duration-200 cursor-pointer
                                         ${selected
                                             ? 'bg-[#138808] text-white border-[#138808] shadow-lg shadow-green-500/20 scale-105'
@@ -163,9 +177,12 @@ const FilterSection = () => {
                             );
                         })}
                     </div>
+                </div>
 
-                    {activeCount > 0 && (
-                        <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                {/* Active filters bar */}
+                {activeCount > 0 && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-5 transition-colors duration-300">
+                        <div className="flex items-center justify-between">
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                 <span className="font-bold text-[#003087] dark:text-blue-400">{activeCount}</span>{' '}
                                 filter{activeCount > 1 ? 's' : ''} selected
@@ -179,7 +196,7 @@ const FilterSection = () => {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        document.getElementById('government-policies')?.scrollIntoView({
+                                        document.getElementById('policies')?.scrollIntoView({
                                             behavior: 'smooth',
                                             block: 'start',
                                         });
@@ -190,8 +207,8 @@ const FilterSection = () => {
                                 </button>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </section>
     );

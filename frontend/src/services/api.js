@@ -45,19 +45,27 @@ export const schemesAPI = {
     getFilters: () => api.get('/api/schemes/filters'),
 
     /** Fetch filtered + paginated schemes */
-    getSchemes: ({ search, level, category, tags, page, limit } = {}) => {
+    getSchemes: ({ search, level, category, state, page, limit } = {}) => {
         const params = new URLSearchParams();
         if (search) params.set('search', search);
         if (level) params.set('level', level);
         if (category) params.set('category', category);
-        if (tags && tags.length) params.set('tags', tags.join(','));
+        if (state) params.set('state', state);
         if (page) params.set('page', String(page));
         if (limit) params.set('limit', String(limit));
         return api.get(`/api/schemes?${params.toString()}`);
     },
 
-    /** Fetch single scheme by slug */
-    getScheme: (slug) => api.get(`/api/schemes/${slug}`),
+    /** Fetch single scheme by id */
+    getScheme: (id) => api.get(`/api/schemes/${id}`),
+};
+
+/**
+ * News-specific API helpers
+ */
+export const newsAPI = {
+    /** Fetch latest policy updates */
+    getNews: (limit = 6) => api.get(`/api/news?limit=${limit}`),
 };
 
 export default api;
