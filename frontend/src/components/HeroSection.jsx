@@ -3,7 +3,7 @@ import Button from './Button';
 
 const HeroSection = () => {
     return (
-        <section className="relative text-white overflow-hidden min-h-[88vh] flex items-center">
+        <section className="relative text-white overflow-hidden min-h-[100dvh] sm:min-h-[88vh] flex items-center">
             {/* Deep layered background */}
             <div className="absolute inset-0 bg-[#001233] dark:bg-gray-950" />
             <div className="absolute inset-0 bg-gradient-to-br from-[#001a4d] via-[#002a6b] to-[#001233] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950" />
@@ -50,7 +50,7 @@ const HeroSection = () => {
                         </span>
                     </div>
 
-                    <h1 className="text-6xl md:text-7xl font-black leading-[1.05] mb-6 tracking-tight">
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[1.05] mb-6 tracking-tight">
                         Your Gateway to{' '}
                         <span className="relative inline-block">
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[#FFB347]">
@@ -68,12 +68,12 @@ const HeroSection = () => {
                         Apply online, track status, and access benefits — all in one place.
                     </p>
 
-                    <div className="flex flex-wrap gap-4 mb-20">
+                    <div className="flex flex-col sm:flex-row gap-4 mb-20">
                         <button
                             onClick={() => {
                                 document.getElementById('filters-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }}
-                            className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] hover:from-[#e55f00] hover:to-[#e07a00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-1 active:translate-y-0 text-base"
+                            className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] hover:from-[#e55f00] hover:to-[#e07a00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 text-base"
                         >
                             Find My Schemes →
                         </button>

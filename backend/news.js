@@ -83,10 +83,24 @@ const KEYWORD_TIERS = {
 };
 
 const IGNORE_KEYWORDS = [
-    'cricket', 'ipl', 'match', 'tournament', 'football', 'sports',
-    'celebrity', 'actor', 'actress', 'movie', 'film', 'box office',
+    // Entertainment & Sports
+    'cricket', 'ipl', 'match', 'tournament', 'football', 'sports', 'tennis',
+    'celebrity', 'actor', 'actress', 'movie', 'film', 'box office', 'cinema',
     'trailer', 'music', 'concert', 'tv show', 'reality show', 'fashion',
-    'entertainment', 'gaming', 'esports', 'youtube', 'bollywood', 'hollywood'
+    'entertainment', 'gaming', 'esports', 'youtube', 'bollywood', 'hollywood',
+    
+    // Crime, Accidents & Sensationalism
+    'murder', 'rape', 'killed', 'arrest', 'arrested', 'police investigation',
+    'accident', 'crash', 'suicide', 'scam', 'fraud', 'robbery', 'theft', 'bribe',
+    'shootout', 'terrorist', 'encounter', 'smuggling', 'ED raids', 'CBI probe',
+    
+    // Pure Politics & Elections (not policy)
+    'election', 'poll', 'voting', 'campaign', 'mla', 'mp', 'rally', 'protest',
+    'congress vs bjp', 'political drama', 'resignation', 'opposition party',
+    
+    // Markets & Business (corporate vs government)
+    'share market', 'stock market', 'sensex', 'nifty', 'investor', 'trading',
+    'quarterly result', 'ipo', 'mutual fund', 'crypto', 'bitcoin'
 ];
 
 const isPolicyRelated = (title, summary) => {
@@ -109,7 +123,7 @@ const isPolicyRelated = (title, summary) => {
         }
     }
 
-    // Return true if score meets threshold (e.g., 3 means at least one Tier 1/6 or a combination of others)
+    // Return true if score meets threshold (reduced to 3 to avoid blocking valid news with short descriptions)
     return score >= 3;
 };
 
@@ -120,8 +134,8 @@ const syncNews = async () => {
     // 1. Fetch from NewsAPI
     try {
         console.log('Fetching from NewsAPI...');
-        // Broadening the query to get more results, then applying strict local filtering
-        const newsApiUrl = `https://newsapi.org/v2/everything?q=india+(government+OR+ministry)+(scheme+OR+yojana+OR+policy)&language=en&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
+        // Restricted query targeting specific Indian scheme and policy keywords
+        const newsApiUrl = `https://newsapi.org/v2/everything?q="india"+AND+("government"+OR+"ministry")+AND+("yojana"+OR+"scheme"+OR+"subsidy"+OR+"policy"+OR+"initiative")&language=en&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
         const response = await axios.get(newsApiUrl);
 
         if (response.data && response.data.articles) {
@@ -172,9 +186,21 @@ const syncNews = async () => {
         return { success: false, message: 'No news fetched' };
     }
 
+    // Deduplicate in-memory batch by URL and Title
+    const uniqueNewsMap = new Map();
+    for (const article of allNews) {
+        const titleKey = article.title.toLowerCase().trim();
+        // Prefer articles with images if there's a duplicate title
+        if (!uniqueNewsMap.has(titleKey) || (!uniqueNewsMap.get(titleKey).img_url && article.img_url)) {
+            uniqueNewsMap.set(titleKey, article);
+        }
+    }
+    const deduplicatedNews = Array.from(uniqueNewsMap.values());
+    console.log(`Deduplicated raw fetched articles: ${allNews.length} -> ${deduplicatedNews.length}`);
+
     // Apply strict policy keyword filter
-    const filteredNews = allNews.filter(article => isPolicyRelated(article.title, article.summary));
-    console.log(`Articles after keyword filtering: ${filteredNews.length} / ${allNews.length}`);
+    const filteredNews = deduplicatedNews.filter(article => isPolicyRelated(article.title, article.summary));
+    console.log(`Articles after keyword filtering: ${filteredNews.length} / ${deduplicatedNews.length}`);
 
     if (filteredNews.length === 0) {
         console.log('No relevant policy news found after filtering.');
@@ -186,19 +212,24 @@ const syncNews = async () => {
         // To avoid duplicates based on 'url', we rely on Supabase unique constraint on the URL column if it exists.
         // If there isn't one, we should fetch existing URLs first to filter. 
         // For efficiency, let's fetch recent URLs to filter in memory.
+        // Fetch both URL and Title to prevent duplicates of the same story
         const { data: existingData, error: fetchError } = await supabase
             .from(TABLE_NAME)
-            .select('url')
+            .select('url, title')
             .order('created_at', { ascending: false })
-            .limit(1000); // Check against last 1000 to prevent infinite growth issues
+            .limit(1000); 
 
         if (fetchError) {
             console.error('Error fetching existing news for duplicate check:', fetchError.message);
         }
 
         const existingUrls = new Set(existingData?.map(item => item.url) || []);
+        const existingTitles = new Set(existingData?.map(item => item.title?.toLowerCase().trim()) || []);
 
-        const newArticlesToInsert = filteredNews.filter(article => !existingUrls.has(article.url));
+        const newArticlesToInsert = filteredNews.filter(article => {
+            const titleKey = article.title.toLowerCase().trim();
+            return !existingUrls.has(article.url) && !existingTitles.has(titleKey);
+        });
 
         if (newArticlesToInsert.length === 0) {
             console.log('All fetched articles are already in the database. Nothing new to insert.');
@@ -253,7 +284,18 @@ router.get('/', async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch news' });
         }
 
-        res.json(data);
+        // Final safety net: Deduplicate in memory before sending to frontend
+        const uniqueTitles = new Set();
+        const finalData = [];
+        for (const item of data) {
+            const t = item.title?.toLowerCase().trim() || '';
+            if (!uniqueTitles.has(t)) {
+                uniqueTitles.add(t);
+                finalData.push(item);
+            }
+        }
+
+        res.json(finalData);
     } catch (err) {
         console.error('Route GET /news Error:', err);
         res.status(500).json({ error: 'Failed to fetch news' });

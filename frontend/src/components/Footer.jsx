@@ -14,7 +14,7 @@ const Footer = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
                     {/* Brand Section */}
                     <div>
                         <div className="flex items-center gap-2 mb-6">
@@ -29,81 +29,50 @@ const Footer = () => {
                             NitiNow is an information portal designed to help citizens discover and access government schemes.
                             We simplify complex policy data into actionable insights for everyone.
                         </p>
-                        <div className="flex gap-4">
-                            {['📘', '🐦', '📷', '▶️'].map((icon, i) => (
-                                <a key={i} href="#" className="w-9 h-9 rounded-full bg-white/5 hover:bg-[#FF6B00] flex items-center justify-center text-sm transition-all duration-300 hover:-translate-y-1">
-                                    {icon}
-                                </a>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Platform Links */}
                     <div>
                         <h4 className="text-lg font-bold mb-6 text-white inline-block relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-1/2 after:h-1 after:bg-[#FF6B00] after:rounded-full">
-                            Platform
+                            Platform Links
                         </h4>
                         <ul className="space-y-3 text-sm">
-                            {['Home', 'Browse Schemes', 'Eligibility Check', 'Track Application', 'Policy Updates'].map((item) => (
-                                <li key={item}>
-                                    <a href="#" className="text-gray-400 hover:text-[#FF6B00] transition-colors flex items-center gap-2 group">
+                            {[
+                                { label: 'Home', href: '/' },
+                                { label: 'Search Schemes', href: '#filters-section' },
+                                { label: 'Browse Policies', href: '#government-policies' },
+                                { label: 'Recent Updates', href: '#recent-policy-updates' }
+                            ].map((item) => (
+                                <li key={item.label}>
+                                    <a
+                                        href={item.href}
+                                        onClick={item.href.startsWith('#') ? (e) => {
+                                            e.preventDefault();
+                                            document.getElementById(item.href.substring(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        } : undefined}
+                                        className="text-gray-400 hover:text-[#FF6B00] transition-colors flex items-center gap-2 group"
+                                    >
                                         <span className="w-1.5 h-1.5 rounded-full bg-gray-600 group-hover:bg-[#FF6B00] transition-colors" />
-                                        {item}
+                                        {item.label}
                                     </a>
                                 </li>
                             ))}
-                        </ul>
-                    </div>
-
-                    {/* Support Links */}
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-white inline-block relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-1/2 after:h-1 after:bg-[#FF6B00] after:rounded-full">
-                            Support
-                        </h4>
-                        <ul className="space-y-3 text-sm">
-                            {['Help Center', 'FAQs', 'Contact Us', 'Privacy Policy', 'Terms of Service'].map((item) => (
-                                <li key={item}>
-                                    <a href="#" className="text-gray-400 hover:text-[#FF6B00] transition-colors flex items-center gap-2 group">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-600 group-hover:bg-[#FF6B00] transition-colors" />
-                                        {item}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Contact Info */}
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-white inline-block relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-1/2 after:h-1 after:bg-[#FF6B00] after:rounded-full">
-                            Contact Us
-                        </h4>
-                        <ul className="space-y-4 text-sm text-gray-400">
-                            <li className="flex gap-3 items-start">
-                                <span className="text-[#FF6B00]">📍</span>
-                                <div>
-                                    <p className="text-white font-medium">Head Office</p>
-                                    <p>Tech Hub, Connaught Place,<br />New Delhi - 110001</p>
-                                </div>
-                            </li>
-                            <li className="flex gap-3 items-center">
-                                <span className="text-[#FF6B00]">📧</span>
-                                <a href="mailto:support@nitinow.in" className="hover:text-white transition-colors">support@nitinow.in</a>
-                            </li>
-                            <li className="flex gap-3 items-center">
-                                <span className="text-[#FF6B00]">📞</span>
-                                <a href="tel:+911800123456" className="hover:text-white transition-colors">1800-123-4567</a>
-                            </li>
                         </ul>
                     </div>
                 </div>
 
                 {/* Bottom Bar */}
                 <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 gap-4">
-                    <p>&copy; {new Date().getFullYear()} NitiNow. All rights reserved.</p>
-                    <p className="text-center md:text-right max-w-lg">
-                        <span className="text-[#FF6B00] font-bold">Disclaimer:</span> This is an information aggregator portal. We are not an official government body.
-                        Please visit official government websites (gov.in) for applications.
-                    </p>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <p>&copy; {new Date().getFullYear()} NitiNow. All rights reserved.</p>
+                        <p className="max-w-xs text-center md:text-left">
+                            <span className="text-[#FF6B00] font-bold">Disclaimer:</span> This is an information aggregator portal. We are not an official government body.
+                        </p>
+                    </div>
+                    <div>
+                        <span className="text-gray-400 font-medium">Developed by: </span>
+                        <strong className="text-white text-sm tracking-wide">Vishesh Jiwnani</strong>
+                    </div>
                 </div>
             </div>
         </footer>

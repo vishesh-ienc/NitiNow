@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ToggleButton from './togglebutton';
+import { useAppContext } from '../context/AppContext';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const { filters, updateFilters } = useAppContext();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -36,9 +38,9 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Nav */}
-        <nav>
-          <ul className="flex gap-1 list-none items-center">
+        {/* Nav & Search */}
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-end">
+          <ul className="hidden md:flex gap-1 list-none items-center">
             {[
               { label: 'Home', href: '/' },
               { label: 'Policies', href: '#government-policies', id: 'government-policies' },
@@ -55,30 +57,48 @@ const Header = () => {
                       }
                       : undefined
                   }
-                  className="text-white/80 hover:text-white text-sm font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:bg-white/10 relative group"
+                  className="text-white/80 hover:text-white text-sm font-medium py-2 px-3 lg:px-4 rounded-lg transition-all duration-200 hover:bg-white/10 relative group whitespace-nowrap"
                 >
                   {item.label}
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-[#FF6B00] group-hover:w-4/5 transition-all duration-300 rounded-full" />
                 </a>
               </li>
             ))}
-
-            {/* Theme Toggle */}
-            <li className="ml-2">
-              <ToggleButton />
-            </li>
-
-            {/* Login CTA */}
-            <li className="ml-2">
-              <a
-                href="/login"
-                className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] hover:from-[#e55f00] hover:to-[#e07a00] text-white text-sm font-semibold py-2.5 px-6 rounded-full transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 active:translate-y-0 inline-block"
-              >
-                Login →
-              </a>
-            </li>
           </ul>
-        </nav>
+
+          {/* Search Bar */}
+          <div className="relative w-full max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-4 h-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => {
+                updateFilters({ search: e.target.value });
+                if (e.target.value.trim().length > 0) {
+                  const section = document.getElementById('government-policies');
+                  if (section) {
+                    const rect = section.getBoundingClientRect();
+                    // If the section is pushed down the screen or currently out of view, auto-scroll to it
+                    if (rect.top > window.innerHeight * 0.4 || rect.bottom < 0) {
+                      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }
+                }
+              }}
+              placeholder="Search schemes..."
+              className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:bg-white/20 focus:border-transparent transition-all shadow-inner"
+            />
+          </div>
+
+          {/* Theme Toggle - Always visible */}
+          <div className="shrink-0">
+            <ToggleButton />
+          </div>
+        </div>
       </div>
     </header>
   );

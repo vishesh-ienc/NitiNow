@@ -74,16 +74,16 @@ const GovernmentPolicies = () => {
         text && text.length > len ? text.slice(0, len) + '…' : text;
 
     // Parse text into bullet points
-    const parseBulletPoints = (text, maxPoints = 4, truncateLen = 80) => {
+    const parseBulletPoints = (text) => {
         if (!text) return [];
         const raw = text
             .split(/(?:\.\s+(?=[A-Z₹]))|(?:\s*(?:\d+[\.\\)]\s))|(?:\s*[;•]\s*)/)
             .map((s) => s.trim().replace(/^\.*|\.*$/g, '').trim())
             .filter((s) => s.length > 15);
         return {
-            collapsed: raw.slice(0, maxPoints).map((s) => s.length > truncateLen ? s.slice(0, truncateLen) + '…' : s),
+            collapsed: raw.slice(0, 3), // top 3 shown fully
             full: raw.slice(0, 8).map((s) => s.length > 150 ? s.slice(0, 150) + '…' : s),
-            isTruncated: raw.length > maxPoints || raw.some((s) => s.length > truncateLen),
+            isTruncated: raw.length > 3,
         };
     };
 
@@ -157,9 +157,14 @@ const GovernmentPolicies = () => {
                 {parsed.isTruncated && (
                     <button
                         onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                        className={`mt-2 text-xs font-semibold ${colors.link} transition-colors`}
+                        className={`group/rm mt-2.5 inline-flex items-center gap-1 text-xs font-semibold ${colors.link} transition-all duration-200`}
                     >
-                        {expanded ? '← Show less' : 'Read more →'}
+                        <span className="border-b border-transparent group-hover/rm:border-current transition-all">
+                            {expanded ? 'Show less' : 'Read more'}
+                        </span>
+                        <svg className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </button>
                 )}
             </div>
@@ -180,9 +185,14 @@ const GovernmentPolicies = () => {
                 {needsTruncation && (
                     <button
                         onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                        className="mt-1 text-xs font-semibold text-[#003087] dark:text-blue-400 hover:text-[#0050cc] transition-colors"
+                        className="group/rm mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#003087] dark:text-blue-400 hover:text-[#0050cc] transition-all duration-200"
                     >
-                        {expanded ? '← Show less' : 'Read more →'}
+                        <span className="border-b border-transparent group-hover/rm:border-current transition-all">
+                            {expanded ? 'Show less' : 'Read more'}
+                        </span>
+                        <svg className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </button>
                 )}
             </div>
@@ -191,8 +201,8 @@ const GovernmentPolicies = () => {
 
     return (
         <section
-            id="policies"
-            className="relative py-20 px-4 sm:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950"
+            id="government-policies"
+            className="relative py-20 px-4 sm:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 scroll-mt-24"
         >
             {/* Subtle dot pattern */}
             <div
@@ -231,19 +241,19 @@ const GovernmentPolicies = () => {
                 {/* Table */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700 rounded-2xl shadow-lg shadow-gray-200/40 dark:shadow-black/20 overflow-hidden">
                     <div className="max-h-[620px] overflow-y-auto">
-                        <table className="w-full text-left">
-                            <thead className="sticky top-0 z-20">
-                                <tr className="bg-gradient-to-r from-[#001233] to-[#003087] text-white">
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-center w-12">#</th>
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Scheme Name</th>
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Category</th>
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Level</th>
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Benefits</th>
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider">Eligibility</th>
-                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-center">Details</th>
+                        <table className="w-full text-left block md:table">
+                            <thead className="hidden md:table-header-group sticky top-0 z-20">
+                                <tr className="bg-gradient-to-r from-[#001233] to-[#003087] text-white flex flex-col md:table-row">
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-center w-12 hidden md:table-cell">#</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-left md:table-cell">Scheme Name</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-left md:table-cell">Category</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-left md:table-cell">Level</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-left md:table-cell">Benefits</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-left md:table-cell">Eligibility</th>
+                                    <th className="py-4 px-5 text-xs font-bold uppercase tracking-wider text-center md:table-cell">Details</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            <tbody className="block md:table-row-group divide-y divide-gray-100 dark:divide-gray-800">
                                 {loading ? (
                                     <tr>
                                         <td colSpan="7" className="py-20 text-center">
@@ -270,39 +280,70 @@ const GovernmentPolicies = () => {
                                         return (
                                             <React.Fragment key={idx}>
                                                 <tr
-                                                    className={`group transition-all duration-150 hover:bg-orange-50/60 dark:hover:bg-orange-900/10 cursor-pointer ${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50'}`}
+                                                    className={`group transition-colors duration-200 hover:bg-orange-50/60 dark:hover:bg-orange-900/10 cursor-pointer block md:table-row px-4 py-4 md:px-0 md:py-0 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50'} hover:shadow-sm`}
                                                     onClick={() => setExpandedIdx(isExpanded ? null : idx)}
                                                 >
-                                                    <td className="py-4 px-5 text-center">
+                                                    <td className="py-2 px-2 md:py-4 md:px-5 md:text-center hidden md:table-cell">
                                                         <span className="w-7 h-7 rounded-full bg-[#003087]/10 dark:bg-blue-900/30 text-[#003087] dark:text-blue-300 text-xs font-bold flex items-center justify-center mx-auto">
                                                             {globalIdx}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-5 max-w-[250px]">
-                                                        <span className="font-semibold text-[#001233] dark:text-white text-sm group-hover:text-[#003087] dark:group-hover:text-blue-300 transition-colors leading-snug block">
+                                                    <td className="py-2 px-2 md:py-4 md:px-5 max-w-full md:max-w-[250px] block md:table-cell">
+                                                        <div className="flex items-center gap-2 md:hidden mb-2">
+                                                            <span className="w-6 h-6 rounded-full bg-[#003087]/10 dark:bg-blue-900/30 text-[#003087] dark:text-blue-300 text-[10px] font-bold flex items-center justify-center">
+                                                                {globalIdx}
+                                                            </span>
+                                                        </div>
+                                                        <span className="font-bold md:font-semibold text-[#001233] dark:text-white text-base md:text-sm group-hover:text-[#003087] dark:group-hover:text-blue-300 transition-colors leading-snug block">
                                                             {scheme.scheme_name}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-5">
+                                                    <td className="py-2 px-2 md:py-4 md:px-5 block md:table-cell">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Category:</span>
                                                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${colorClass}`}>
                                                             {scheme.category || '—'}
                                                         </span>
+                                                        </div>
                                                     </td>
-                                                    <td className="py-4 px-5">
+                                                    <td className="py-2 px-2 md:py-4 md:px-5 block md:table-cell">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Level:</span>
                                                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${scheme.level === 'Central' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}`}>
                                                             {scheme.level || '—'}
                                                         </span>
+                                                        </div>
                                                     </td>
-                                                    <td className="py-4 px-5 text-sm text-gray-600 dark:text-gray-400 max-w-[220px]">
-                                                        {truncate(scheme.benefits, 50)}
+                                                    <td className="py-2 px-2 md:py-4 md:px-5 text-sm text-gray-600 dark:text-gray-400 block md:table-cell max-w-full md:max-w-[220px]">
+                                                        <div className="flex md:block gap-2 items-start">
+                                                            <span className="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0 w-20 mt-0.5">Benefits:</span>
+                                                            <span className="flex-1">{truncate(scheme.benefits, 50)}</span>
+                                                        </div>
                                                     </td>
-                                                    <td className="py-4 px-5 text-sm text-gray-500 dark:text-gray-400 max-w-[200px]">
-                                                        {truncate(scheme.eligibility, 40)}
+                                                    <td className="py-2 px-2 md:py-4 md:px-5 text-sm text-gray-500 dark:text-gray-400 block md:table-cell max-w-full md:max-w-[200px]">
+                                                        <div className="flex md:block gap-2 items-start">
+                                                            <span className="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0 w-20 mt-0.5">Eligibility:</span>
+                                                            <span className="flex-1">{truncate(scheme.eligibility, 40)}</span>
+                                                        </div>
                                                     </td>
-                                                    <td className="py-4 px-5 text-center">
-                                                        <div className="flex items-center gap-2 justify-center">
-                                                            <button className="inline-flex items-center gap-1 bg-gradient-to-r from-[#003087] to-[#0050cc] text-white text-xs font-bold py-1.5 px-3 rounded-full hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                                                                {isExpanded ? 'Close' : 'View'}
+                                                    <td className="py-4 px-2 md:px-5 text-center mt-2 md:mt-0 block md:table-cell border-t md:border-0 border-gray-100 dark:border-gray-800">
+                                                        <div className="flex items-center gap-2 justify-center md:justify-center">
+                                                            <button className={`flex-1 md:flex-none inline-flex items-center gap-1.5 text-xs font-bold py-2.5 md:py-1.5 px-4 rounded-lg md:w-24 justify-center transition-all duration-200 ${
+                                                                isExpanded
+                                                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                                                    : 'bg-gradient-to-r from-[#003087] to-[#0050cc] text-white hover:shadow-lg hover:shadow-blue-500/30'
+                                                            }`}>
+                                                                {isExpanded ? (
+                                                                    <>
+                                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                        Close
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                                        Details
+                                                                    </>
+                                                                )}
                                                             </button>
                                                             {scheme.official_link && (
                                                                 <a
@@ -310,9 +351,10 @@ const GovernmentPolicies = () => {
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    className="inline-flex items-center gap-1 bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-xs font-bold py-1.5 px-3 rounded-full hover:shadow-md hover:shadow-orange-400/30 transition-all duration-200 hover:-translate-y-0.5"
+                                                                    className="flex-1 md:flex-none inline-flex items-center gap-1.5 bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-xs font-bold py-2.5 md:py-1.5 px-4 rounded-lg md:w-24 justify-center hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-200"
                                                                 >
-                                                                    Apply ↗
+                                                                    Apply
+                                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                                                 </a>
                                                             )}
                                                         </div>
@@ -327,9 +369,9 @@ const GovernmentPolicies = () => {
                                                                 setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
                                                             }
                                                         }}
-                                                        className="bg-gradient-to-br from-blue-50/80 to-orange-50/40 dark:from-gray-800 dark:to-gray-850"
+                                                        className="bg-gradient-to-br from-blue-50/80 to-orange-50/40 dark:from-gray-800 dark:to-gray-850 block md:table-row"
                                                     >
-                                                        <td colSpan="7" className="p-6">
+                                                        <td colSpan="7" className="p-4 md:p-6 block md:table-cell">
                                                             <div className="max-w-5xl mx-auto space-y-5">
                                                                 <h3 className="text-lg font-bold text-[#001233] dark:text-white">{scheme.scheme_name}</h3>
 
@@ -376,8 +418,8 @@ const GovernmentPolicies = () => {
 
                                                                 {/* Apply Here CTA */}
                                                                 {scheme.official_link && (
-                                                                    <div className="bg-gradient-to-r from-[#FF6B00]/10 to-[#FF8C00]/10 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-5 border-2 border-[#FF6B00]/30 dark:border-orange-500/30 flex items-center justify-between">
-                                                                        <div>
+                                                                    <div className="bg-gradient-to-r from-[#FF6B00]/10 to-[#FF8C00]/10 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-5 border-2 border-[#FF6B00]/30 dark:border-orange-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+                                                                        <div className="text-center sm:text-left">
                                                                             <h4 className="text-sm font-bold text-[#FF6B00] dark:text-orange-400 mb-1">🚀 Ready to Apply?</h4>
                                                                             <p className="text-xs text-gray-500 dark:text-gray-400">Click below to go directly to the official application portal.</p>
                                                                         </div>
@@ -385,9 +427,10 @@ const GovernmentPolicies = () => {
                                                                             href={scheme.official_link}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
-                                                                            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-sm font-bold py-3 px-7 rounded-full hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap"
+                                                                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-sm font-bold py-3 px-7 rounded-full hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-200 whitespace-nowrap"
                                                                         >
-                                                                            Apply Here ↗
+                                                                            Apply Now
+                                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                                                         </a>
                                                                     </div>
                                                                 )}

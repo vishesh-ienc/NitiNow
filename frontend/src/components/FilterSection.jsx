@@ -6,6 +6,7 @@ const FilterSection = () => {
     const { filters, updateFilters, clearFilters } = useAppContext();
     const [filterOptions, setFilterOptions] = useState({ levels: [], categories: [], states: [] });
     const [loading, setLoading] = useState(true);
+    const [quickError, setQuickError] = useState('');
 
     // Fetch available filter values from backend on mount
     useEffect(() => {
@@ -55,14 +56,14 @@ const FilterSection = () => {
                 </div>
 
                 {/* Filter dropdowns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {/* Level filter */}
-                    <div className="relative group">
+                    <div className="relative group min-w-0">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">🏛️</div>
                         <select
                             value={filters.level}
                             onChange={(e) => updateFilters({ level: e.target.value })}
-                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer
+                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer text-ellipsis whitespace-nowrap overflow-hidden
                                 focus:outline-none focus:border-[#FF6B00] focus:ring-4 focus:ring-[#FF6B00]/10
                                 hover:border-[#FF6B00]/50 transition-all duration-200 appearance-none shadow-sm hover:shadow-md"
                         >
@@ -79,12 +80,12 @@ const FilterSection = () => {
                     </div>
 
                     {/* Category filter */}
-                    <div className="relative group">
+                    <div className="relative group min-w-0">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">📂</div>
                         <select
                             value={filters.category}
                             onChange={(e) => updateFilters({ category: e.target.value })}
-                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer
+                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer text-ellipsis whitespace-nowrap overflow-hidden
                                 focus:outline-none focus:border-[#FF6B00] focus:ring-4 focus:ring-[#FF6B00]/10
                                 hover:border-[#FF6B00]/50 transition-all duration-200 appearance-none shadow-sm hover:shadow-md"
                         >
@@ -101,12 +102,12 @@ const FilterSection = () => {
                     </div>
 
                     {/* State filter */}
-                    <div className="relative group">
+                    <div className="relative group min-w-0">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">📍</div>
                         <select
                             value={filters.state}
                             onChange={(e) => updateFilters({ state: e.target.value })}
-                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer
+                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm cursor-pointer text-ellipsis whitespace-nowrap overflow-hidden
                                 focus:outline-none focus:border-[#FF6B00] focus:ring-4 focus:ring-[#FF6B00]/10
                                 hover:border-[#FF6B00]/50 transition-all duration-200 appearance-none shadow-sm hover:shadow-md"
                         >
@@ -122,57 +123,75 @@ const FilterSection = () => {
                         </div>
                     </div>
 
-                    {/* Search input */}
-                    <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none z-10">🔍</div>
-                        <input
-                            type="text"
-                            value={filters.search}
-                            onChange={(e) => updateFilters({ search: e.target.value })}
-                            placeholder="Search schemes..."
-                            className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm
-                                focus:outline-none focus:border-[#FF6B00] focus:ring-4 focus:ring-[#FF6B00]/10
-                                hover:border-[#FF6B00]/50 transition-all duration-200 shadow-sm hover:shadow-md"
-                        />
-                    </div>
                 </div>
 
                 {/* Quick-search tag pills */}
+                {/* Quick-search links */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-6 mb-6 transition-colors duration-300">
-                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                        I'm looking for...
-                    </p>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                            Quick Categories:
+                        </p>
+                        {quickError && (
+                            <span className="text-xs font-bold text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-full border border-red-200 dark:border-red-800/50">
+                                {quickError}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
                         {[
-                            { label: 'Financial Assistance', icon: '💰' },
+                            { label: 'Agriculture', icon: '🚜' },
                             { label: 'Education', icon: '🎓' },
                             { label: 'Women', icon: '👩‍💼' },
-                            { label: 'Student', icon: '📚' },
-                            { label: 'Training', icon: '🔧' },
-                            { label: 'Entrepreneurship', icon: '🚀' },
-                            { label: 'Civil Services', icon: '🏛️' },
-                            { label: 'Labour', icon: '👷' },
-                            { label: 'Health', icon: '🏥' },
-                            { label: 'Insurance', icon: '🛡️' },
-                            { label: 'Disability', icon: '♿' },
-                            { label: 'Farmer', icon: '🌾' },
+                            { label: 'Business', icon: '💼' },
+                            { label: 'Healthcare', icon: '🏥' },
                             { label: 'Housing', icon: '🏠' },
-                            { label: 'Scholarship', icon: '🎖️' },
+                            { label: 'Scholarships', icon: '🎖️' },
+                            { label: 'Employment', icon: '💼' },
+                            { label: 'Financial Aid', icon: '💸' },
                         ].map((f) => {
-                            const selected = filters.search === f.label;
+                            const currentSelections = filters.search ? filters.search.split(',').map(s => s.trim()).filter(Boolean) : [];
+                            const selected = currentSelections.includes(f.label);
                             return (
                                 <button
                                     key={f.label}
-                                    onClick={() => updateFilters({ search: selected ? '' : f.label })}
-                                    className={`flex items-center gap-2 text-sm font-semibold py-2.5 px-5 rounded-full border-2 transition-all duration-200 cursor-pointer
+                                    onClick={() => {
+                                        if (selected) {
+                                            setQuickError('');
+                                            updateFilters({ search: currentSelections.filter(t => t !== f.label).join(', ') });
+                                        } else {
+                                            if (currentSelections.length >= 3) {
+                                                setQuickError('You can only select up to 3 quick categories.');
+                                                setTimeout(() => setQuickError(''), 3000);
+                                                return;
+                                            }
+                                            setQuickError('');
+                                            currentSelections.push(f.label);
+                                            updateFilters({ search: currentSelections.join(', ') });
+                                        }
+                                    }}
+                                    className={`relative flex items-center gap-3 p-2.5 pr-4 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden group
                                         ${selected
-                                            ? 'bg-[#138808] text-white border-[#138808] shadow-lg shadow-green-500/20 scale-105'
-                                            : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-[#FF6B00] hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-[#FF6B00] hover:shadow-md'
+                                            ? 'bg-gradient-to-r from-green-50/80 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 border-[#138808] shadow-sm shadow-green-500/10'
+                                            : 'bg-gray-50/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 hover:border-[#FF6B00]/40 hover:shadow-lg hover:shadow-orange-500/10'
                                         }`}
                                 >
-                                    <span>{f.icon}</span>
-                                    {f.label}
-                                    {selected && <span className="ml-1 text-white/80 text-xs">✓</span>}
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg transition-colors duration-300 drop-shadow-sm shrink-0
+                                        ${selected ? 'bg-white dark:bg-gray-900' : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800'}
+                                    `}>
+                                        <span className={`transition-transform duration-300 ${selected ? 'scale-110' : 'group-hover:scale-110'}`}>
+                                            {f.icon}
+                                        </span>
+                                    </div>
+                                    <span className={`text-[13px] font-bold tracking-wide whitespace-nowrap ${selected ? 'text-[#138808] dark:text-green-400' : 'text-gray-700 dark:text-gray-300 group-hover:text-[#FF6B00] dark:group-hover:text-orange-400'}`}>
+                                        {f.label}
+                                    </span>
+                                    
+                                    {selected && (
+                                        <div className="absolute top-0 right-0 -translate-y-[15%] translate-x-[15%] w-4 h-4 rounded-full bg-[#138808] text-white flex items-center justify-center text-[10px] font-black shadow-sm border-2 border-white dark:border-gray-800">
+                                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                        </div>
+                                    )}
                                 </button>
                             );
                         })}
@@ -182,12 +201,12 @@ const FilterSection = () => {
                 {/* Active filters bar */}
                 {activeCount > 0 && (
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-5 transition-colors duration-300">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                 <span className="font-bold text-[#003087] dark:text-blue-400">{activeCount}</span>{' '}
                                 filter{activeCount > 1 ? 's' : ''} selected
                             </p>
-                            <div className="flex gap-3">
+                            <div className="flex w-full sm:w-auto gap-3 justify-between sm:justify-end items-center">
                                 <button
                                     onClick={clearFilters}
                                     className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition font-medium"
@@ -196,12 +215,12 @@ const FilterSection = () => {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        document.getElementById('policies')?.scrollIntoView({
+                                        document.getElementById('government-policies')?.scrollIntoView({
                                             behavior: 'smooth',
                                             block: 'start',
                                         });
                                     }}
-                                    className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-sm font-bold py-2 px-6 rounded-full hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-200 hover:-translate-y-0.5"
+                                    className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white text-sm font-bold py-2 px-6 rounded-full hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-200 hover:-translate-y-[1px]"
                                 >
                                     Search Schemes →
                                 </button>

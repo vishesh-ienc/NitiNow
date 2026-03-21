@@ -46,22 +46,21 @@ const RecentUpdates = () => {
     };
 
     return (
-        <section id="recent-policy-updates" className="py-20 px-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 transition-colors duration-300">
+        <section id="recent-policy-updates" className="py-16 md:py-20 px-4 sm:px-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 transition-colors duration-300">
             <div className="max-w-7xl mx-auto">
-                <div className="flex items-end justify-between mb-12">
+                <div className="flex justify-between items-end mb-12">
                     <div>
-                        <span className="inline-block bg-[#FF6B00]/10 text-[#FF6B00] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-3 border border-[#FF6B00]/20">
-                            Latest News
-                        </span>
-                        <h2 className="text-4xl font-black text-[#001233] dark:text-white">
-                            Policy <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[#FF8C00]">Updates</span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-[#FF6B00] text-sm font-bold mb-4 border border-orange-200 dark:border-orange-800/50">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6B00] opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF6B00]"></span>
+                            </span>
+                            Live Feed
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#001233] dark:text-white tracking-tight">
+                            Recent <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[#FF8C00]">Updates</span>
                         </h2>
                     </div>
-
-                    <button className="text-sm font-bold text-[#003087] dark:text-blue-400 hover:text-[#FF6B00] transition-colors duration-300 flex items-center gap-1 group">
-                        View All Updates
-                        <span className="group-hover:translate-x-1 transition-transform">→</span>
-                    </button>
                 </div>
 
                 {loading ? (
@@ -82,7 +81,7 @@ const RecentUpdates = () => {
                         No recent policy updates found at this time.
                     </div>
                 ) : (
-                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {updates.map((update, index) => {
                             const colorClass = CARD_COLORS[index % CARD_COLORS.length];
                             const icon = getIcon(update.source);
@@ -90,16 +89,16 @@ const RecentUpdates = () => {
                             return (
                                 <div
                                     key={update.id}
-                                    className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl dark:shadow-black/20 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full"
+                                    className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl dark:shadow-black/20 dark:hover:shadow-black/40 transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-[#FF6B00]/40 dark:hover:border-[#FF6B00]/40 overflow-hidden flex flex-col h-full"
                                 >
                                     {/* Image Section */}
-                                    <div className="relative h-48 overflow-hidden">
+                                    <div className="relative h-40 sm:h-48 overflow-hidden">
                                         {update.img_url ? (
                                             <>
                                                 <img
                                                     src={update.img_url}
                                                     alt={update.title}
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    className="w-full h-full object-cover transition-opacity duration-700 ease-out group-hover:opacity-90"
                                                     onError={(e) => {
                                                         e.target.style.display = 'none';
                                                         e.target.nextSibling.style.display = 'flex';
@@ -123,7 +122,7 @@ const RecentUpdates = () => {
                                         </div>
 
                                         {/* Floating Icon */}
-                                        <div className={`absolute bottom-0 right-6 translate-y-1/2 w-12 h-12 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center text-2xl shadow-xl border border-gray-100 dark:border-gray-600 transition-transform duration-300 group-hover:rotate-12`}>
+                                        <div className={`absolute bottom-0 right-6 translate-y-1/2 w-12 h-12 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center text-2xl shadow-xl border border-gray-100 dark:border-gray-600 transition-transform duration-500 group-hover:rotate-6`}>
                                             {icon}
                                         </div>
                                     </div>

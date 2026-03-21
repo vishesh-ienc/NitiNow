@@ -9,7 +9,7 @@ const supabase = createClient(
     process.env.SUPABASE_ANON_KEY
 );
 
-const TABLE_NAME = 'schemes'; 
+const TABLE_NAME = 'schemes';
 
 // ─── GET /api/schemes/filters  →  distinct filter values ───
 router.get('/filters', async (req, res) => {
@@ -77,10 +77,15 @@ router.get('/', async (req, res) => {
             query = query.ilike('state', state);
         }
         if (search) {
-            // Search across multiple columns using OR
-            query = query.or(
-                `scheme_name.ilike.%${search}%,details.ilike.%${search}%,benefits.ilike.%${search}%,eligibility.ilike.%${search}%`
-            );
+            // Split search string by commas for multi-selection logic
+            const terms = search.split(',').map(s => s.trim()).filter(Boolean);
+            if (terms.length > 0) {
+                // Build a massive OR string covering every term across every searchable column
+                const searchConditions = terms.map(term => 
+                    `scheme_name.ilike.%${term}%,details.ilike.%${term}%,benefits.ilike.%${term}%,eligibility.ilike.%${term}%`
+                ).join(',');
+                query = query.or(searchConditions);
+            }
         }
 
         // Pagination
