@@ -27,6 +27,17 @@ app.use('/users', userRoute);
 app.use('/api/schemes', schemesRoute);
 app.use('/api/news', newsRoute);
 
+// Keep Render alive — self-ping every 14 minutes to prevent spin-down
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
+setInterval(async () => {
+    try {
+        await fetch(RENDER_URL);
+        console.log(`Keep-alive ping sent to ${RENDER_URL}`);
+    } catch (err) {
+        console.error('Keep-alive ping failed:', err.message);
+    }
+}, 14 * 60 * 1000); // 14 minutes
+
 // Schedule news sync every 24 hours at midnight
 cron.schedule('0 0 * * *', async () => {
     console.log('Running daily news sync cron job...');
