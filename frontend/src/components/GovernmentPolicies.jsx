@@ -50,7 +50,7 @@ const GovernmentPolicies = () => {
                 setTotal(result.total);
                 setTotalPages(result.totalPages);
             } catch (err) {
-                setError('Failed to fetch schemes. Make sure the backend is running on port 3000.');
+                setError('Fetch failed - Backend took too long to respond.');
                 console.error(err);
             } finally {
                 setLoading(false);
@@ -301,17 +301,17 @@ const GovernmentPolicies = () => {
                                                     <td className="py-2 px-2 md:py-4 md:px-5 block md:table-cell">
                                                         <div className="flex items-center gap-2">
                                                             <span className="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Category:</span>
-                                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${colorClass}`}>
-                                                            {scheme.category || '—'}
-                                                        </span>
+                                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${colorClass}`}>
+                                                                {scheme.category || '—'}
+                                                            </span>
                                                         </div>
                                                     </td>
                                                     <td className="py-2 px-2 md:py-4 md:px-5 block md:table-cell">
                                                         <div className="flex items-center gap-2">
                                                             <span className="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Level:</span>
-                                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${scheme.level === 'Central' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}`}>
-                                                            {scheme.level || '—'}
-                                                        </span>
+                                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${scheme.level === 'Central' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}`}>
+                                                                {scheme.level || '—'}
+                                                            </span>
                                                         </div>
                                                     </td>
                                                     <td className="py-2 px-2 md:py-4 md:px-5 text-sm text-gray-600 dark:text-gray-400 block md:table-cell max-w-full md:max-w-[220px]">
@@ -328,11 +328,10 @@ const GovernmentPolicies = () => {
                                                     </td>
                                                     <td className="py-4 px-2 md:px-5 text-center mt-2 md:mt-0 block md:table-cell border-t md:border-0 border-gray-100 dark:border-gray-800">
                                                         <div className="flex items-center gap-2 justify-center md:justify-center">
-                                                            <button className={`flex-1 md:flex-none inline-flex items-center gap-1.5 text-xs font-bold py-2.5 md:py-1.5 px-4 rounded-lg md:w-24 justify-center transition-all duration-200 ${
-                                                                isExpanded
+                                                            <button className={`flex-1 md:flex-none inline-flex items-center gap-1.5 text-xs font-bold py-2.5 md:py-1.5 px-4 rounded-lg md:w-24 justify-center transition-all duration-200 ${isExpanded
                                                                     ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                                                     : 'bg-gradient-to-r from-[#003087] to-[#0050cc] text-white hover:shadow-lg hover:shadow-blue-500/30'
-                                                            }`}>
+                                                                }`}>
                                                                 {isExpanded ? (
                                                                     <>
                                                                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
