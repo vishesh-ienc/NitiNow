@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
+const port = process.env.PORT || 3000;
+
 const userRoute = require('./users');
 const schemesRoute = require('./schemes');
 const { router: newsRoute, syncNews } = require('./news');
@@ -12,8 +14,9 @@ const cron = require('node-cron');
 app.use(cors());
 app.use(express.json());
 
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
 
 app.get('/', (req, res) => {
