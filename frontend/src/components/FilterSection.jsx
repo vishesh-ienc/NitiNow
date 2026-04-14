@@ -127,18 +127,29 @@ const FilterSection = () => {
 
                 {/* Quick-search tag pills */}
                 {/* Quick-search links */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-6 mb-6 transition-colors duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                        <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                            Quick Categories:
-                        </p>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-4 md:p-6 mb-6 transition-colors duration-300">
+                    <div className="flex items-center justify-between mb-3 md:mb-4">
+                        <div className="flex items-center gap-2">
+                            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                                Quick Categories
+                            </p>
+                            <span className="md:hidden text-[10px] text-gray-300 dark:text-gray-600 font-medium">← swipe →</span>
+                        </div>
                         {quickError && (
-                            <span className="text-xs font-bold text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-full border border-red-200 dark:border-red-800/50">
+                            <span className="text-[10px] md:text-xs font-bold text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20 px-2 md:px-3 py-1 rounded-full border border-red-200 dark:border-red-800/50">
                                 {quickError}
                             </span>
                         )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                    {/* Mobile: horizontal scroll row | Desktop: flex-wrap grid */}
+                    <div className="
+                        flex items-center gap-2 md:gap-x-8 md:gap-y-4
+                        overflow-x-auto md:overflow-x-visible
+                        md:flex-wrap
+                        pb-2 md:pb-0
+                        -mx-1 px-1 md:mx-0 md:px-0
+                        scrollbar-hide
+                    " style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                         {[
                             { label: 'Agriculture', icon: '🚜' },
                             { label: 'Education', icon: '🎓' },
@@ -170,26 +181,26 @@ const FilterSection = () => {
                                             updateFilters({ search: currentSelections.join(', ') });
                                         }
                                     }}
-                                    className={`relative flex items-center gap-3 p-2.5 pr-4 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden group
+                                    className={`relative flex items-center gap-1.5 md:gap-3 py-2 px-3 md:p-2.5 md:pr-4 rounded-full md:rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden group shrink-0
                                         ${selected
                                             ? 'bg-gradient-to-r from-green-50/80 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 border-[#138808] shadow-sm shadow-green-500/10'
                                             : 'bg-gray-50/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 hover:border-[#FF6B00]/40 hover:shadow-lg hover:shadow-orange-500/10'
                                         }`}
                                 >
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg transition-colors duration-300 drop-shadow-sm shrink-0
+                                    <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-sm md:text-lg transition-colors duration-300 drop-shadow-sm shrink-0
                                         ${selected ? 'bg-white dark:bg-gray-900' : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800'}
                                     `}>
                                         <span className={`transition-transform duration-300 ${selected ? 'scale-110' : 'group-hover:scale-110'}`}>
                                             {f.icon}
                                         </span>
                                     </div>
-                                    <span className={`text-[13px] font-bold tracking-wide whitespace-nowrap ${selected ? 'text-[#138808] dark:text-green-400' : 'text-gray-700 dark:text-gray-300 group-hover:text-[#FF6B00] dark:group-hover:text-orange-400'}`}>
+                                    <span className={`text-[11px] md:text-[13px] font-bold tracking-wide whitespace-nowrap ${selected ? 'text-[#138808] dark:text-green-400' : 'text-gray-700 dark:text-gray-300 group-hover:text-[#FF6B00] dark:group-hover:text-orange-400'}`}>
                                         {f.label}
                                     </span>
                                     
                                     {selected && (
-                                        <div className="absolute top-0 right-0 -translate-y-[15%] translate-x-[15%] w-4 h-4 rounded-full bg-[#138808] text-white flex items-center justify-center text-[10px] font-black shadow-sm border-2 border-white dark:border-gray-800">
-                                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                        <div className="absolute top-0 right-0 -translate-y-[15%] translate-x-[15%] w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-[#138808] text-white flex items-center justify-center text-[10px] font-black shadow-sm border-2 border-white dark:border-gray-800">
+                                            <svg className="w-2 h-2 md:w-2.5 md:h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                         </div>
                                     )}
                                 </button>
