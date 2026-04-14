@@ -4,13 +4,35 @@ import { useAppContext } from '../context/AppContext';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const { filters, updateFilters } = useAppContext();
+  const mobileInputRef = React.useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Auto-focus mobile input when opened
+  useEffect(() => {
+    if (mobileSearchOpen && mobileInputRef.current) {
+      mobileInputRef.current.focus();
+    }
+  }, [mobileSearchOpen]);
+
+  const handleSearchChange = (e) => {
+    updateFilters({ search: e.target.value });
+    if (e.target.value.trim().length > 0) {
+      const section = document.getElementById('government-policies');
+      if (section) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top > window.innerHeight * 0.4 || rect.bottom < 0) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }
+  };
 
   return (
     <header
@@ -22,17 +44,17 @@ const Header = () => {
       {/* Top accent bar - tricolor strip */}
       <div className="h-1 w-full bg-gradient-to-r from-[#FF6B00] via-white to-[#138808]" />
 
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center py-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center py-3">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#FF8C00] flex items-center justify-center shadow-lg shadow-orange-500/30">
-            <span className="text-white font-black text-lg leading-none">न</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#FF8C00] flex items-center justify-center shadow-lg shadow-orange-500/30">
+            <span className="text-white font-black text-base sm:text-lg leading-none">न</span>
           </div>
           <div>
-            <h1 className="text-white text-2xl font-black tracking-tight leading-none">
+            <h1 className="text-white text-xl sm:text-2xl font-black tracking-tight leading-none">
               Niti<span className="text-[#FF6B00]">Now</span>
             </h1>
-            <p className="text-white/50 text-[10px] tracking-widest uppercase leading-none mt-0.5">
+            <p className="text-white/50 text-[9px] sm:text-[10px] tracking-widest uppercase leading-none mt-0.5">
               Schemes Information Portal
             </p>
           </div>
@@ -66,8 +88,8 @@ const Header = () => {
             ))}
           </ul>
 
-          {/* Search Bar */}
-          <div className="relative w-full max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]">
+          {/* Desktop Search Bar — hidden on mobile */}
+          <div className="relative hidden sm:block w-full max-w-[200px] lg:max-w-[280px]">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="w-4 h-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -76,27 +98,71 @@ const Header = () => {
             <input
               type="text"
               value={filters.search}
-              onChange={(e) => {
-                updateFilters({ search: e.target.value });
-                if (e.target.value.trim().length > 0) {
-                  const section = document.getElementById('government-policies');
-                  if (section) {
-                    const rect = section.getBoundingClientRect();
-                    // If the section is pushed down the screen or currently out of view, auto-scroll to it
-                    if (rect.top > window.innerHeight * 0.4 || rect.bottom < 0) {
-                      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }
-                }
-              }}
+              onChange={handleSearchChange}
               placeholder="Search schemes..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:bg-white/20 focus:border-transparent transition-all shadow-inner"
+              className="w-full pl-9 pr-3 py-2 rounded-full bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:bg-white/20 focus:border-transparent transition-all shadow-inner"
             />
           </div>
+
+          {/* Mobile Search Toggle Button — visible only on mobile */}
+          <button
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className={`sm:hidden flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 ${
+              mobileSearchOpen
+                ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-500/30'
+                : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+            }`}
+            aria-label="Toggle search"
+          >
+            {mobileSearchOpen ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            )}
+          </button>
 
           {/* Theme Toggle - Always visible */}
           <div className="shrink-0">
             <ToggleButton />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Search Drawer — slides down below header */}
+      <div
+        className={`sm:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          mobileSearchOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="px-4 pb-3 pt-1">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              ref={mobileInputRef}
+              type="text"
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder="Search government schemes..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/15 border border-white/25 text-white placeholder-white/50 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:bg-white/20 focus:border-transparent transition-all shadow-inner"
+            />
+            {filters.search && (
+              <button
+                onClick={() => updateFilters({ search: '' })}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/40 hover:text-white/80 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

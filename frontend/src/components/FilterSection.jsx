@@ -150,17 +150,30 @@ const FilterSection = () => {
                         -mx-1 px-1 md:mx-0 md:px-0
                         scrollbar-hide
                     " style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                        {[
-                            { label: 'Agriculture', icon: '🚜' },
-                            { label: 'Education', icon: '🎓' },
-                            { label: 'Women', icon: '👩‍💼' },
-                            { label: 'Business', icon: '💼' },
-                            { label: 'Healthcare', icon: '🏥' },
-                            { label: 'Housing', icon: '🏠' },
-                            { label: 'Scholarships', icon: '🎖️' },
-                            { label: 'Employment', icon: '💼' },
-                            { label: 'Financial Aid', icon: '💸' },
-                        ].map((f) => {
+                        {(() => {
+                            const allCategories = [
+                                { label: 'Agriculture', icon: '🚜' },
+                                { label: 'Education', icon: '🎓' },
+                                { label: 'Women', icon: '👩‍💼' },
+                                { label: 'Business', icon: '💼' },
+                                { label: 'Healthcare', icon: '🏥' },
+                                { label: 'Housing', icon: '🏠' },
+                                { label: 'Scholarships', icon: '🎖️' },
+                                { label: 'Employment', icon: '💼' },
+                                { label: 'Financial Aid', icon: '💸' },
+                            ];
+                            const currentSelections = filters.search ? filters.search.split(',').map(s => s.trim()).filter(Boolean) : [];
+                            // Sort: selected items first (in selection order), then unselected
+                            const sorted = [...allCategories].sort((a, b) => {
+                                const aSelected = currentSelections.includes(a.label);
+                                const bSelected = currentSelections.includes(b.label);
+                                if (aSelected && !bSelected) return -1;
+                                if (!aSelected && bSelected) return 1;
+                                if (aSelected && bSelected) return currentSelections.indexOf(a.label) - currentSelections.indexOf(b.label);
+                                return 0;
+                            });
+                            return sorted;
+                        })().map((f) => {
                             const currentSelections = filters.search ? filters.search.split(',').map(s => s.trim()).filter(Boolean) : [];
                             const selected = currentSelections.includes(f.label);
                             return (

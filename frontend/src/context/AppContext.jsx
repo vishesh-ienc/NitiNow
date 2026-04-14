@@ -13,7 +13,7 @@ export const useAppContext = () => {
 export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [theme, setTheme] = useState(() => {
-        return localStorage.getItem('nitinow-theme') || 'light';
+        return localStorage.getItem('nitinow-theme') || 'dark';
     });
 
     // ── Filter state shared across FilterSection ↔ GovernmentPolicies ──
